@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>LGN - Muestra Creciendo Sin Límite</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    body {
+      background: #fff;
+      color: black;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      margin-top: 40px;
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    button {
+      margin: 10px;
+      padding: 12px 25px;
+      font-size: 16px;
+      background-color: green;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #btnStop {
+      background-color: red;
+    }
+
+    #btnExcel {
+      background-color: orange;
+    }
+
+    h2 {
+      margin-top: 30px;
+    }
+
+    #lg-container {
+      width: 95%;
+      height: 600px;
+      margin: 30px auto;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    #explicacion {
+      background: #e3f2fd;
+      padding: 15px;
+      border-radius: 10px;
+      margin: 20px auto;
+      width: 90%;
+      text-align: justify;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🎲 Ley de los Grandes Números - Simulación DADOS</h1>
+
+ <div id="explicacion">
+  <b>¿En qué consiste este experimento?</b><br><br>
+  En este experimento simulamos grupos de lanzamientos de un dado justo de seis caras, con un tamaño de muestra "n" definido por el usuario.<br><br>
+
+  - En cada paso se lanzan "n" veces el dado y se calcula la frecuencia relativa de obtener un "6" en ese grupo.<br>
+  - Para visualizar mejor la tendencia, el tamaño total de la muestra se va acumulando progresivamente.<br>
+  - Luego, en cada grupo, se evalúa la <b>frecuencia relativa</b> de ese bloque.<br><br>
+
+  <center><b>Total de "6" obtenidos ÷ Total de lanzamientos</b></center><br>
+
+  - La probabilidad empírica acumulada se grafica en función del <b>tamaño total de la muestra</b>.<br>
+  - A medida que la muestra crece, podrás observar cómo la frecuencia relativa se acerca al valor teórico de obtener un "6", que es <b>1/6 ≈ 0.1667</b>.<br>
+</div>
+
+
+  <div style="margin-top: 20px;">
+    <input type="number" id="incremento" placeholder="Lanzamientos por paso" min="1" value="50">
+    <button onclick="iniciarSimulacion()">Iniciar</button>
+    <button id="btnStop" onclick="detenerSimulacion()">Detener</button>
+    <button id="btnExcel" onclick="descargarExcel()">Descargar Excel</button>
+  </div>
+
+  <h2>📈 Frecuencia Relativa de obtener un "6" en n lanzamientos </h2>
+  <div id="lg-container">
+    <canvas id="graficoLGN"></canvas>
+  </div>
+
+  <div id="conteo-resultados"></div>
+
+  <script>
+    let graficoLGN = null;
+    let totalLanzamientos = 0;
+    let totalSeis = 0;
+    let etiquetas = [];
+    let frecuencias = [];
+    let probabilidadTeorica = [];
+    let resultados = [];
+    let intervalo = null;
+
+    function iniciarSimulacion() {
+      const incremento = parseInt(document.getElementById("incremento").value);
+      if (isNaN(incremento) || incremento <= 0) {
+        alert("Por favor, ingresa un valor válido mayor que 0.");
+        return;
+      }
+
+      if (graficoLGN) {
+        graficoLGN.destroy();
+      }
+
+      totalLanzamientos = 0;
+      totalSeis = 0;
+      etiquetas = [];
+      frecuencias = [];
+      probabilidadTeorica = [];
+      resultados = [];
+
+      const ctx = document.getElementById("graficoLGN").getContext("2d");
+
+      graficoLGN = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: etiquetas,
+          datasets: [
+            {
+              label: 'Frecuencia relativa de "6"',
+              data: frecuencias,
+              borderColor: 'rgba(255, 99, 132, 1)',
+              backgroundColor: 'rgba(255, 99, 132, 0.2)',
+              fill: false,
+              tension: 0.2
+            },
+            {
+              label: 'Probabilidad teórica (1/6 ≈ 0.1667)',
+              data: probabilidadTeorica,
+              borderColor: 'rgba(54, 162, 235, 1)',
+              borderDash: [5, 5],
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 1,
+              title: {
+                display: true,
+                text: 'Frecuencia relativa'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Tamaño de la muestra'
+              }
+            }
+          }
+        }
+      });
+
+      if (intervalo) clearInterval(intervalo);
+
+      intervalo = setInterval(() => {
+        simularPaso(incremento);
+      }, 100);
+    }
+
+    function simularPaso(cantidad) {
+      for (let i = 0; i < cantidad; i++) {
+        const resultado = Math.floor(Math.random() * 6) + 1;
+        totalLanzamientos++;
+        if (resultado === 6) totalSeis++;
+      }
+
+      const frecuencia = (totalSeis / totalLanzamientos).toFixed(4);
+
+      etiquetas.push(totalLanzamientos);
+      frecuencias.push(frecuencia);
+      probabilidadTeorica.push((1 / 6).toFixed(4));
+
+      resultados.push({
+        'Tamaño de la muestra': totalLanzamientos,
+        'Total de "6" obtenidos': totalSeis,
+        'Frecuencia relativa ': frecuencia
+      });
+
+      graficoLGN.data.labels = etiquetas;
+      graficoLGN.data.datasets[0].data = frecuencias;
+      graficoLGN.data.datasets[1].data = probabilidadTeorica;
+      graficoLGN.update();
+
+      mostrarConteo();
+    }
+
+    function mostrarConteo() {
+      let html = `<h3>Conteo actual:</h3>`;
+      html += `<p>Total de lanzamientos: ${totalLanzamientos}</p>`;
+      html += `<p>Total de "6" obtenidos: ${totalSeis}</p>`;
+      html += `<p>Frecuencia relativa actual de "6": ${(totalSeis / totalLanzamientos).toFixed(4)}</p>`;
+
+      document.getElementById("conteo-resultados").innerHTML = html;
+    }
+
+    function detenerSimulacion() {
+      if (intervalo) {
+        clearInterval(intervalo);
+        intervalo = null;
+      }
+    }
+
+    function descargarExcel() {
+      if (resultados.length === 0) {
+        alert("Aún no hay datos para descargar.");
+        return;
+      }
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(resultados);
+      XLSX.utils.book_append_sheet(wb, ws, "Resultados");
+      XLSX.writeFile(wb, "Tabla_Frecuencias_LGN.xlsx");
+    }
+  </script>
+
+</body>
+</html>
