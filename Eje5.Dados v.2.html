@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Ley de los Grandes Números - Dados Virtuales</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 30px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+        }
+        #resultados {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .cara {
+            margin: 0 10px;
+            text-align: center;
+        }
+        .barra {
+            width: 30px;
+            background-color: steelblue;
+            margin-top: 5px;
+            transition: height 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ley de los Grandes Números - Lanzamiento de Dados</h1>
+    <p>Lanza el dado múltiples veces y observa cómo las frecuencias se estabilizan cerca de 1/6.</p>
+
+    <button onclick="lanzarDado(1)">Lanzar 1 vez</button>
+    <button onclick="lanzarDado(10)">Lanzar 10 veces</button>
+    <button onclick="lanzarDado(100)">Lanzar 100 veces</button>
+
+    <div id="resultados"></div>
+
+    <script>
+        const conteoCaras = [0, 0, 0, 0, 0, 0];
+        let totalLanzamientos = 0;
+
+        const resultadosDiv = document.getElementById("resultados");
+
+        function inicializar() {
+            resultadosDiv.innerHTML = "";
+            for (let i = 0; i < 6; i++) {
+                const contenedor = document.createElement("div");
+                contenedor.className = "cara";
+                contenedor.innerHTML = `<strong>${i + 1}</strong><br><div id="barra${i}" class="barra" style="height: 0px;"></div><br><span id="texto${i}">0%</span>`;
+                resultadosDiv.appendChild(contenedor);
+            }
+        }
+
+        function lanzarDado(n) {
+            for (let i = 0; i < n; i++) {
+                const resultado = Math.floor(Math.random() * 6);
+                conteoCaras[resultado]++;
+                totalLanzamientos++;
+            }
+            actualizarGrafico();
+        }
+
+        function actualizarGrafico() {
+            for (let i = 0; i < 6; i++) {
+                const proporcion = (conteoCaras[i] / totalLanzamientos) * 100;
+                document.getElementById(`barra${i}`).style.height = `${proporcion * 2}px`;
+                document.getElementById(`texto${i}`).innerText = `${proporcion.toFixed(2)}%`;
+            }
+        }
+
+        inicializar();
+    </script>
+</body>
+</html>

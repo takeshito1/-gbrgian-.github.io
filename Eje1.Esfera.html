@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Estimación de π - Método de Montecarlo</title>
+    <style>
+        body {
+            background: #ffffff;
+            color: black;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            margin: 20px auto;
+            max-width: 900px;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        #teoria {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px auto;
+            width: 90%;
+            text-align: justify;
+            font-size: 16px;
+        }
+
+        canvas {
+            border: 2px solid black;
+            margin: 20px auto;
+        }
+
+        #info {
+            margin-top: 15px;
+            font-size: 18px;
+        }
+
+        button, input {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            border-radius: 8px;
+            border: none;
+        }
+
+        button {
+            background-color: green;
+            color: white;
+            cursor: pointer;
+        }
+
+        #btnVaciar {
+            background-color: red;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🎲 Estimación de π con el Método de Montecarlo</h1>
+
+<div id="teoria">
+
+    <h2 style="text-align:center;">🎯 ¿Por qué podemos estimar π con puntos aleatorios?</h2>
+
+    Este experimento utiliza el <b>método de Montecarlo</b> para aproximar el valor de π de manera gráfica y aleatoria.<br><br>
+
+    Imagina un cuadrado que contiene un círculo inscrito. Generamos puntos aleatorios dentro del cuadrado y observamos cuántos caen dentro del círculo. La proporción de puntos dentro del círculo se relaciona directamente con el valor de π.<br><br>
+
+    <b>Proporción experimental (frecuencia relativa):</b><br>
+    Cada vez que generas puntos aleatorios, puedes calcular:<br><br>
+
+    <div style="text-align:center; font-size:18px;">
+        <div style="border-bottom:1px solid black; display:inline-block; padding: 2px 10px;">
+            Puntos dentro del círculo
+        </div><br>
+        <div style="display:inline-block; padding: 2px 10px;">
+            Total de puntos generados
+        </div>
+    </div><br>
+
+    <b>Probabilidad teórica:</b><br>
+    Matemáticamente, la probabilidad de que un punto aleatorio caiga dentro del círculo es:<br><br>
+
+    <center style="font-size:18px; margin:10px 0;">
+        <b>P(caer dentro)</b> = Área del círculo ÷ Área del cuadrado = π · r² ÷ (2r)² = π ÷ 4 ≈ 0.7854
+    </center><br>
+
+    Al comparar la proporción experimental con esta probabilidad teórica, podemos estimar el valor de π.<br><br>
+
+    <b>Interpretación:</b><br>
+    La proporción experimental se interpreta como una <b>estimación empírica</b> de la probabilidad teórica. A medida que generas más puntos, esta proporción tiende a acercarse al valor esperado gracias a la <b>Ley de los Grandes Números</b>.<br><br>
+
+    <b>Importante:</b>
+    <ul>
+        <li>A mayor cantidad de puntos, mayor precisión en la estimación de π.</li>
+        <li>Este fenómeno se basa en la <b>Ley de los Grandes Números</b>, que afirma que, al repetir muchas veces un experimento aleatorio, la frecuencia relativa converge hacia la probabilidad teórica.</li>
+    </ul>
+
+    <h3>📏 Ley de los Grandes Números (LGN)</h3>
+    Al inicio, es normal que la estimación de π fluctúe debido al azar. Sin embargo, al generar una gran cantidad de puntos, la <b>proporción de puntos dentro del círculo</b> tenderá a estabilizarse cerca del valor esperado, mostrando un claro ejemplo práctico y visual de la Ley de los Grandes Números.
+</div>
+
+<input type="number" id="cantidadPersonalizada" placeholder="Cantidad de puntos" min="1">
+<button onclick="generarCantidadPersonalizada()">Generar puntos</button>
+<button id="btnVaciar">Vaciar</button>
+
+<div id="info"></div>
+
+<canvas id="canvas" width="400" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+const radio = 200;
+const centro = { x: 200, y: 200 };
+
+let totalPuntos = 0;
+let puntosDentro = 0;
+
+function dibujarBase() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.arc(centro.x, centro.y, radio, 0, Math.PI * 2);
+    ctx.stroke();
+}
+
+function generarPuntos(n) {
+    for (let i = 0; i < n; i++) {
+        const x = Math.random() * 2 - 1;
+        const y = Math.random() * 2 - 1;
+
+        const distancia = Math.sqrt(x * x + y * y);
+
+        const px = centro.x + x * radio;
+        const py = centro.y + y * radio;
+
+        ctx.fillStyle = distancia <= 1 ? 'green' : 'red';
+        if (distancia <= 1) puntosDentro++;
+        ctx.fillRect(px, py, 2, 2);
+
+        totalPuntos++;
+    }
+
+    actualizarInfo();
+}
+
+function actualizarInfo() {
+    const estimacionPi = totalPuntos > 0 ? (4 * puntosDentro / totalPuntos).toFixed(5) : 0;
+    document.getElementById('info').innerHTML =
+        `<b>Total de puntos:</b> ${totalPuntos} | 
+         <b>Dentro del círculo:</b> ${puntosDentro} | 
+         <b>Estimación de π:</b> ${estimacionPi}`;
+}
+
+function vaciarPuntos() {
+    totalPuntos = 0;
+    puntosDentro = 0;
+    dibujarBase();
+    actualizarInfo();
+}
+
+function generarCantidadPersonalizada() {
+    const cantidad = parseInt(document.getElementById('cantidadPersonalizada').value);
+    if (!isNaN(cantidad) && cantidad > 0) {
+        generarPuntos(cantidad);
+    } else {
+        alert("Por favor ingresa un número válido mayor que 0.");
+    }
+}
+
+document.getElementById("btnVaciar").addEventListener("click", vaciarPuntos);
+
+dibujarBase();
+</script>
+
+</body>
+</html>
